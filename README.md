@@ -7,7 +7,6 @@ Triumph Keeper is a personal productivity app that combines goal tracking, knowl
 
 ## Core Features
 
-##Proposal
 
 # Must-Have Features
 1. **Triumph Goals**
@@ -60,7 +59,7 @@ Triumph Keeper is a personal productivity app that combines goal tracking, knowl
 ## Wireframes
 
 ### Main Screen
-```
+
 
 ### Goal Detail Screen
 ```
