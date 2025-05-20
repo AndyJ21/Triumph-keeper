@@ -91,6 +91,10 @@ struct ContentView: View {
             TriumphGoalsWidget()
                 .transition(.scale)
                 .frame(height: 300)
+        case "knowledgebytes":
+            KnowledgeByteWidget()
+                .transition(.scale)
+                .frame(height: 300)
         default:
             Text("Unknown Widget Type: \(widget.type ?? "nil")")
                 .foregroundColor(.red)
@@ -144,7 +148,8 @@ struct AddWidgetView: View {
     
     let widgetTypes = [
         (name: "Quick Links", type: "quicklinks", icon: "link", description: "Save and organize your important links"),
-        (name: "Triumph Goals", type: "triumphgoals", icon: "checkmark.circle", description: "Track your goals and achievements")
+        (name: "Triumph Goals", type: "triumphgoals", icon: "checkmark.circle", description: "Track your goals and achievements"),
+        (name: "Knowledge Bytes", type: "knowledgebytes", icon: "doc.text.magnifyingglass", description: "Store and access code snippets and technical notes")
     ]
     
     var body: some View {

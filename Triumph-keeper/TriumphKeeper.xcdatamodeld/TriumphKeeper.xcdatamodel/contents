@@ -31,4 +31,15 @@
         <attribute name="type" optional="NO" attributeType="String"/>
         <attribute name="widgetData" optional="YES" attributeType="Binary"/>
     </entity>
+    <entity name="KnowledgeByte" representedClassName=".KnowledgeByte" syncable="YES">
+        <attribute name="content" optional="NO" attributeType="String"/>
+        <attribute name="dateCreated" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="displayOrder" optional="YES" attributeType="Integer 64" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="isFavorite" optional="NO" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="languageOrType" optional="YES" attributeType="String"/>
+        <attribute name="lastAccessed" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="tags" optional="YES" attributeType="String"/>
+        <attribute name="title" optional="YES" attributeType="String"/>
+    </entity>
 </model> 

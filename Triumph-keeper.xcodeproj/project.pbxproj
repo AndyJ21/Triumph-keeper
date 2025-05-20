@@ -35,16 +35,6 @@
 			path = "Triumph-keeper";
 			sourceTree = "<group>";
 		};
-		A1E8E3C62DD927000032F073 /* Triumph-keeperTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "Triumph-keeperTests";
-			sourceTree = "<group>";
-		};
-		A1E8E3D02DD927000032F073 /* Triumph-keeperUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "Triumph-keeperUITests";
-			sourceTree = "<group>";
-		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -76,8 +66,6 @@
 			isa = PBXGroup;
 			children = (
 				A1E8E3B52DD926FE0032F073 /* Triumph-keeper */,
-				A1E8E3C62DD927000032F073 /* Triumph-keeperTests */,
-				A1E8E3D02DD927000032F073 /* Triumph-keeperUITests */,
 				A1E8E3B42DD926FE0032F073 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -130,9 +118,6 @@
 			dependencies = (
 				A1E8E3C52DD927000032F073 /* PBXTargetDependency */,
 			);
-			fileSystemSynchronizedGroups = (
-				A1E8E3C62DD927000032F073 /* Triumph-keeperTests */,
-			);
 			name = "Triumph-keeperTests";
 			packageProductDependencies = (
 			);
@@ -152,9 +137,6 @@
 			);
 			dependencies = (
 				A1E8E3CF2DD927000032F073 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				A1E8E3D02DD927000032F073 /* Triumph-keeperUITests */,
 			);
 			name = "Triumph-keeperUITests";
 			packageProductDependencies = (

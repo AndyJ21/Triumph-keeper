@@ -2,6 +2,33 @@ import CoreData
 
 struct PersistenceController {
     static let shared = PersistenceController()
+    static var preview: PersistenceController = {
+        let controller = PersistenceController(inMemory: true)
+        
+        // Create sample knowledge bytes
+        let context = controller.container.viewContext
+        
+        let sampleBytes = [
+            (title: "SwiftUI View Modifier", content: "extension View {\n    func cardStyle() -> some View {\n        self\n            .padding()\n            .background(Color(.systemBackground))\n            .cornerRadius(12)\n            .shadow(radius: 2)\n    }\n}", language: "Swift", tags: "swift,swiftui,modifier"),
+            (title: "Git Command", content: "git log --oneline --graph --all", language: "Git", tags: "git,command,log"),
+            (title: "Docker Compose", content: "version: '3'\nservices:\n  app:\n    build: .\n    ports:\n      - \"8080:8080\"", language: "YAML", tags: "docker,compose,config")
+        ]
+        
+        for (index, byte) in sampleBytes.enumerated() {
+            let knowledgeByte = KnowledgeByte(context: context)
+            knowledgeByte.id = UUID()
+            knowledgeByte.title = byte.title
+            knowledgeByte.content = byte.content
+            knowledgeByte.languageOrType = byte.language
+            knowledgeByte.tags = byte.tags
+            knowledgeByte.dateCreated = Date()
+            knowledgeByte.isFavorite = index == 0
+            knowledgeByte.displayOrder = Int64(index)
+        }
+        
+        try? context.save()
+        return controller
+    }()
 
     let container: NSPersistentContainer
 
@@ -86,6 +113,39 @@ struct PersistenceController {
         widget.widgetData = data
         widget.displayOrder = getNextDisplayOrder(for: "WidgetConfiguration")
         
+        saveContext()
+    }
+    
+    // MARK: - Knowledge Bytes
+    func createKnowledgeByte(title: String?, content: String, languageOrType: String? = nil, tags: String? = nil) -> KnowledgeByte {
+        let context = container.viewContext
+        let byte = KnowledgeByte(context: context)
+        byte.id = UUID()
+        byte.title = title
+        byte.content = content
+        byte.languageOrType = languageOrType
+        byte.tags = tags
+        byte.dateCreated = Date()
+        byte.isFavorite = false
+        byte.displayOrder = Int64(getNextDisplayOrder(for: "KnowledgeByte"))
+        
+        saveContext()
+        return byte
+    }
+    
+    func deleteKnowledgeByte(_ byte: KnowledgeByte) {
+        let context = container.viewContext
+        context.delete(byte)
+        saveContext()
+    }
+    
+    func updateKnowledgeByte(_ byte: KnowledgeByte) {
+        byte.lastAccessed = Date()
+        saveContext()
+    }
+    
+    func toggleFavorite(_ byte: KnowledgeByte) {
+        byte.isFavorite.toggle()
         saveContext()
     }
     
