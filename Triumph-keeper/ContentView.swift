@@ -54,17 +54,17 @@ struct ContentView: View {
                         
                         if widgets.isEmpty {
                             EmptyDashboardView(isAddingWidget: $isAddingWidget)
+                                .frame(height: 300)
                         } else {
                             LazyVGrid(
                                 columns: [
-                                    GridItem(.flexible(), spacing: 16),
                                     GridItem(.flexible(), spacing: 16)
                                 ],
                                 spacing: 16
                             ) {
                                 ForEach(widgets) { widget in
                                     widgetView(for: widget)
-                                        .frame(height: 220)
+                                        .frame(height: 300)
                                 }
                             }
                             .padding(.horizontal)
@@ -86,9 +86,11 @@ struct ContentView: View {
         case "quicklinks":
             QuickLinksWidget()
                 .transition(.scale)
+                .frame(height: 180)
         case "triumphgoals":
             TriumphGoalsWidget()
                 .transition(.scale)
+                .frame(height: 300)
         default:
             Text("Unknown Widget Type: \(widget.type ?? "nil")")
                 .foregroundColor(.red)
@@ -149,9 +151,14 @@ struct AddWidgetView: View {
         NavigationView {
             List {
                 ForEach(widgetTypes, id: \.type) { widgetType in
+                    let existingWidgets = PersistenceController.shared.fetchWidgetConfigurations(ofType: widgetType.type)
+                    let isWidgetTypeExists = !existingWidgets.isEmpty
+                    
                     Button(action: {
-                        addWidget(type: widgetType.type)
-                        isPresented = false
+                        if !isWidgetTypeExists {
+                            addWidget(type: widgetType.type)
+                            isPresented = false
+                        }
                     }) {
                         HStack(spacing: 16) {
                             ZStack {
@@ -170,9 +177,18 @@ struct AddWidgetView: View {
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
+                            
+                            Spacer()
+                            
+                            if isWidgetTypeExists {
+                                Text("Added")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
                         }
                         .padding(.vertical, 8)
                     }
+                    .disabled(isWidgetTypeExists)
                 }
             }
             .navigationTitle("Add Widget")
