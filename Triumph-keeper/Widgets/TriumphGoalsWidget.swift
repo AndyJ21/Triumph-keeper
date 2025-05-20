@@ -49,8 +49,8 @@ struct TriumphGoalsWidget: View {
             } else {
                 ScrollView {
                     LazyVGrid(columns: [GridItem(.flexible())], spacing: 10) {
-                        ForEach(goals) { goal in
-                            GoalRow(goal: goal, isSelected: selectedGoal == goal)
+                        ForEach(goals, id: \.objectID) { goal in
+                            GoalRow(goal: goal, isSelected: selectedGoal?.objectID == goal.objectID)
                                 .onTapGesture {
                                     withAnimation {
                                         selectedGoal = goal
@@ -79,9 +79,12 @@ struct TriumphGoalsWidget: View {
 }
 
 struct GoalRow: View {
-    let goal: TriumphGoal
+    @ObservedObject var goal: TriumphGoal
     let isSelected: Bool
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.managedObjectContext) private var viewContext
+    @State private var showEditSheet = false
+    @State private var showDeleteAlert = false
     
     var completedTasks: Int {
         (goal.tasks?.allObjects as? [TaskItem])?.filter { $0.isCompleted }.count ?? 0
@@ -139,6 +142,190 @@ struct GoalRow: View {
             RoundedRectangle(cornerRadius: 12)
                 .stroke(Color.gray.opacity(0.2), lineWidth: 1)
         )
+        .contextMenu {
+            Button(action: {
+                showEditSheet = true
+            }) {
+                Label("Edit Goal", systemImage: "pencil")
+            }
+            
+            Button(role: .destructive) {
+                showDeleteAlert = true
+            } label: {
+                Label("Delete Goal", systemImage: "trash")
+            }
+        }
+        .sheet(isPresented: $showEditSheet) {
+            EditGoalView(goal: goal, isPresented: $showEditSheet)
+        }
+        .alert("Delete Goal", isPresented: $showDeleteAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive) {
+                deleteGoal()
+            }
+        } message: {
+            Text("Are you sure you want to delete this goal? This will also delete all associated tasks.")
+        }
+    }
+    
+    private func deleteGoal() {
+        withAnimation {
+            viewContext.performAndWait {
+                // First delete all associated tasks
+                if let tasks = goal.tasks?.allObjects as? [TaskItem] {
+                    for task in tasks {
+                        viewContext.delete(task)
+                    }
+                }
+                // Then delete the goal
+                viewContext.delete(goal)
+                try? viewContext.save()
+            }
+        }
+    }
+}
+
+struct EditGoalView: View {
+    @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.presentationMode) var presentationMode
+    @ObservedObject var goal: TriumphGoal
+    @Binding var isPresented: Bool
+    
+    @State private var name: String
+    @State private var description: String
+    @State private var hasDescription: Bool
+    @State private var showError = false
+    @State private var errorMessage = ""
+    
+    init(goal: TriumphGoal, isPresented: Binding<Bool>) {
+        self.goal = goal
+        self._isPresented = isPresented
+        self._name = State(initialValue: goal.name ?? "")
+        self._description = State(initialValue: goal.goalDescription ?? "")
+        self._hasDescription = State(initialValue: goal.goalDescription != nil && !goal.goalDescription!.isEmpty)
+    }
+    
+    var body: some View {
+        NavigationView {
+            ZStack {
+                // Background gradient
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        colorScheme == .dark ? Color(hex: "1a1a1a") : Color(hex: "f0f2f5"),
+                        colorScheme == .dark ? Color(hex: "2d2d2d") : Color.white
+                    ]),
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(spacing: 24) {
+                        // Icon and Title
+                        VStack(spacing: 16) {
+                            Image(systemName: "flag.circle.fill")
+                                .font(.system(size: 60))
+                                .foregroundColor(.blue)
+                            
+                            Text("Edit Goal")
+                                .font(.system(.title2, design: .rounded))
+                                .fontWeight(.bold)
+                        }
+                        .padding(.top, 20)
+                        
+                        // Form Fields
+                        VStack(spacing: 20) {
+                            // Name Field
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Goal Name")
+                                    .font(.system(.subheadline, design: .rounded))
+                                    .foregroundColor(.secondary)
+                                
+                                TextField("Enter goal name", text: $name)
+                                    .font(.system(.body, design: .rounded))
+                                    .padding()
+                                    .background(Color(.systemBackground))
+                                    .cornerRadius(12)
+                                    .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.1 : 0.05),
+                                           radius: 4, x: 0, y: 2)
+                            }
+                            
+                            // Description Toggle
+                            Toggle(isOn: $hasDescription) {
+                                Label("Add Description", systemImage: "text.alignleft")
+                                    .font(.system(.body, design: .rounded))
+                            }
+                            
+                            // Description Field
+                            if hasDescription {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("Description")
+                                        .font(.system(.subheadline, design: .rounded))
+                                        .foregroundColor(.secondary)
+                                    
+                                    TextEditor(text: $description)
+                                        .font(.system(.body, design: .rounded))
+                                        .frame(minHeight: 100)
+                                        .padding()
+                                        .background(Color(.systemBackground))
+                                        .cornerRadius(12)
+                                        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.1 : 0.05),
+                                               radius: 4, x: 0, y: 2)
+                                }
+                            }
+                        }
+                        .padding(.horizontal)
+                        
+                        Spacer()
+                    }
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        isPresented = false
+                    }
+                    .font(.system(.body, design: .rounded))
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Save") {
+                        updateGoal()
+                    }
+                    .font(.system(.body, design: .rounded).bold())
+                    .disabled(name.isEmpty)
+                }
+            }
+            .alert(isPresented: $showError) {
+                Alert(
+                    title: Text("Error"),
+                    message: Text(errorMessage),
+                    dismissButton: .default(Text("OK"))
+                )
+            }
+        }
+    }
+    
+    private func updateGoal() {
+        withAnimation {
+            viewContext.performAndWait {
+                do {
+                    goal.name = name
+                    if hasDescription {
+                        goal.goalDescription = description
+                    } else {
+                        goal.goalDescription = nil
+                    }
+                    
+                    try viewContext.save()
+                    isPresented = false
+                } catch {
+                    errorMessage = "Failed to save changes: \(error.localizedDescription)"
+                    showError = true
+                }
+            }
+        }
     }
 }
 
@@ -283,7 +470,7 @@ struct GoalDetailView: View {
                             )
                         } else {
                             VStack(spacing: 12) {
-                                ForEach(tasks) { task in
+                                ForEach(tasks, id: \.objectID) { task in
                                     TaskRow(task: task) {
                                         taskToDelete = task
                                         showDeleteConfirmation = true
@@ -315,7 +502,7 @@ struct GoalDetailView: View {
                 }
             }
             .sheet(isPresented: $isAddingTask) {
-                AddTaskView(goal: goal, isPresented: $isAddingTask)
+                AddTaskView(goal: goal, isPresented: $isAddingTask) { _ in }
             }
             .alert(isPresented: $showDeleteConfirmation) {
                 Alert(
@@ -334,8 +521,10 @@ struct GoalDetailView: View {
     
     private func deleteTask(_ task: TaskItem) {
         withAnimation {
-            viewContext.delete(task)
-            try? viewContext.save()
+            viewContext.performAndWait {
+                viewContext.delete(task)
+                try? viewContext.save()
+            }
         }
     }
 }
@@ -429,19 +618,24 @@ struct TaskRow: View {
                 .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.1 : 0.05),
                        radius: 4, x: 0, y: 2)
         )
+        .id(task.objectID)
     }
     
     private func toggleCompletion() {
         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-            task.isCompleted.toggle()
-            try? viewContext.save()
+            viewContext.performAndWait {
+                task.isCompleted.toggle()
+                try? viewContext.save()
+            }
         }
     }
 }
 
 struct AddTaskView: View {
-    let goal: TriumphGoal
+    let goal: TriumphGoal?
     @Binding var isPresented: Bool
+    var onTaskCreated: ((TaskItem) -> Void)?
+    
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.managedObjectContext) private var viewContext
     @State private var text = ""
@@ -552,7 +746,6 @@ struct AddTaskView: View {
                                 Label("Set Due Date", systemImage: "calendar")
                                     .font(.system(.body, design: .rounded))
                             }
-                            .toggleStyle(SwitchToggleStyle(tint: .blue))
                             
                             // Due Date Picker
                             if hasDueDate {
@@ -619,13 +812,24 @@ struct AddTaskView: View {
     }
     
     private func addTask() {
-        _ = PersistenceController.shared.createTask(
-            text: text,
-            dueDate: hasDueDate ? dueDate : nil,
-            priority: priority.rawValue,
-            for: goal
-        )
-        isPresented = false
+        let task = TaskItem(context: viewContext)
+        task.id = UUID()
+        task.text = text
+        task.isCompleted = false
+        task.dateCreated = Date()
+        task.priority = priority.rawValue
+        task.displayOrder = 0
+        
+        if hasDueDate {
+            task.dueDate = dueDate
+        }
+        
+        if let goal = goal {
+            task.belongsToProjectList = goal
+        }
+        
+        try? viewContext.save()
+        onTaskCreated?(task)
     }
 }
 
@@ -636,6 +840,10 @@ struct AddGoalView: View {
     @State private var name = ""
     @State private var description = ""
     @State private var hasDescription = false
+    @State private var tasks: [TaskItem] = []
+    @State private var isAddingTask = false
+    @State private var showDeleteConfirmation = false
+    @State private var taskToDelete: TaskItem?
     
     var body: some View {
         NavigationView {
@@ -687,7 +895,6 @@ struct AddGoalView: View {
                                 Label("Add Description", systemImage: "text.alignleft")
                                     .font(.system(.body, design: .rounded))
                             }
-                            .toggleStyle(SwitchToggleStyle(tint: .blue))
                             
                             // Description Field
                             if hasDescription {
@@ -704,6 +911,51 @@ struct AddGoalView: View {
                                         .cornerRadius(12)
                                         .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.1 : 0.05),
                                                radius: 4, x: 0, y: 2)
+                                }
+                            }
+                            
+                            // Tasks Section
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack {
+                                    Text("Tasks")
+                                        .font(.system(.headline, design: .rounded))
+                                    Spacer()
+                                    Button(action: { isAddingTask = true }) {
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "plus.circle.fill")
+                                            Text("Add Task")
+                                        }
+                                        .font(.system(.subheadline, design: .rounded))
+                                        .foregroundColor(.blue)
+                                    }
+                                }
+                                
+                                if tasks.isEmpty {
+                                    VStack(spacing: 12) {
+                                        Image(systemName: "checkmark.circle")
+                                            .font(.system(size: 40))
+                                            .foregroundColor(.blue.opacity(0.7))
+                                        Text("No tasks yet")
+                                            .font(.system(.subheadline, design: .rounded))
+                                            .foregroundColor(.secondary)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 20)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(Color(.systemBackground))
+                                            .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.1 : 0.05),
+                                                   radius: 4, x: 0, y: 2)
+                                    )
+                                } else {
+                                    VStack(spacing: 8) {
+                                        ForEach(tasks, id: \.objectID) { task in
+                                            TaskRow(task: task) {
+                                                taskToDelete = task
+                                                showDeleteConfirmation = true
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -730,6 +982,23 @@ struct AddGoalView: View {
                     .disabled(name.isEmpty)
                 }
             }
+            .sheet(isPresented: $isAddingTask) {
+                AddTaskView(goal: nil, isPresented: $isAddingTask) { task in
+                    tasks.append(task)
+                }
+            }
+            .alert(isPresented: $showDeleteConfirmation) {
+                Alert(
+                    title: Text("Delete Task"),
+                    message: Text("Are you sure you want to delete this task?"),
+                    primaryButton: .destructive(Text("Delete")) {
+                        if let task = taskToDelete {
+                            deleteTask(task)
+                        }
+                    },
+                    secondaryButton: .cancel()
+                )
+            }
         }
     }
     
@@ -737,7 +1006,23 @@ struct AddGoalView: View {
         let goal = PersistenceController.shared.createTriumphGoal(name: name)
         if hasDescription {
             goal.goalDescription = description
-            try? viewContext.save()
+        }
+        
+        // Add tasks to the goal
+        for task in tasks {
+            task.belongsToProjectList = goal
+        }
+        
+        try? viewContext.save()
+    }
+    
+    private func deleteTask(_ task: TaskItem) {
+        withAnimation {
+            if let index = tasks.firstIndex(where: { $0.objectID == task.objectID }) {
+                tasks.remove(at: index)
+                viewContext.delete(task)
+                try? viewContext.save()
+            }
         }
     }
 } 
