@@ -64,7 +64,7 @@ Triumph Keeper is a personal productivity app that combines goal tracking, knowl
 
 ### Goal Detail Screen
 <img src="Triumph-keeper/Assets.xcassets/goal-detail-screenshot.imageset/Simulator Screenshot - iPhone 16 Pro - 2025-05-20 at 10.32.29.png" width="300">
-<img src="Triumph-keeper/Assets.xcassets/goal-detail-screenshot.imageset/Simulator Screenshot - iPhone 16 Pro - 2025-05-20 at 10.29.09.png" width="300">
+<img src="Triumph-keeper/Assets.xcassets/goal-detail-screenshot.imageset/Simulator Screenshot - iPhone 16 Pro - 2025-05-20 at 10.32.49.png" width="300">
 
 ### Quick Links Screen
 <img src="Triumph-keeper/Assets.xcassets/quick-links-screenshot.imageset/Simulator Screenshot - iPhone 16 Pro - 2025-05-20 at 10.44.26.png" width="300">
