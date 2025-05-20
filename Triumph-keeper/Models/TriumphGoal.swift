@@ -11,6 +11,7 @@ extension TriumphGoal {
     }
 
     @NSManaged public var dateCreated: Date
+    @NSManaged public var goalDescription: String?
     @NSManaged public var displayOrder: Int32
     @NSManaged public var id: UUID
     @NSManaged public var name: String?

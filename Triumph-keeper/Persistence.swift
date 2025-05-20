@@ -42,7 +42,7 @@ struct PersistenceController {
     }
     
     // MARK: - Triumph Goals
-    func createTriumphGoal(name: String) {
+    func createTriumphGoal(name: String) -> TriumphGoal {
         let context = container.viewContext
         let newGoal = TriumphGoal(context: context)
         newGoal.id = UUID()
@@ -51,10 +51,11 @@ struct PersistenceController {
         newGoal.displayOrder = getNextDisplayOrder(for: "TriumphGoal")
         
         saveContext()
+        return newGoal
     }
     
     // MARK: - Tasks
-    func createTask(text: String, dueDate: Date? = nil, for goal: TriumphGoal) {
+    func createTask(text: String, dueDate: Date? = nil, priority: String = "Medium", for goal: TriumphGoal) -> TaskItem {
         let context = container.viewContext
         let newTask = TaskItem(context: context)
         newTask.id = UUID()
@@ -62,10 +63,12 @@ struct PersistenceController {
         newTask.dueDate = dueDate
         newTask.dateCreated = Date()
         newTask.isCompleted = false
+        newTask.priority = priority
         newTask.belongsToProjectList = goal
         newTask.displayOrder = getNextDisplayOrder(for: "TaskItem", in: goal)
         
         saveContext()
+        return newTask
     }
     
     // MARK: - Widget Configuration
@@ -112,6 +115,19 @@ struct PersistenceController {
                 let nsError = error as NSError
                 print("Error saving context: \(nsError), \(nsError.userInfo)")
             }
+        }
+    }
+    
+    // Add this function to the PersistenceController class
+    func fetchWidgetConfigurations(ofType type: String) -> [WidgetConfiguration] {
+        let request: NSFetchRequest<WidgetConfiguration> = WidgetConfiguration.fetchRequest()
+        request.predicate = NSPredicate(format: "type == %@", type)
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \WidgetConfiguration.displayOrder, ascending: true)]
+        do {
+            return try container.viewContext.fetch(request)
+        } catch {
+            print("Error fetching widget configurations: \(error)")
+            return []
         }
     }
 } 

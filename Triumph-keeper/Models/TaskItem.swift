@@ -15,6 +15,7 @@ extension TaskItem {
     @NSManaged public var dueDate: Date?
     @NSManaged public var id: UUID
     @NSManaged public var isCompleted: Bool
+    @NSManaged public var priority: String?
     @NSManaged public var text: String?
     @NSManaged public var belongsToProjectList: TriumphGoal
 } 
