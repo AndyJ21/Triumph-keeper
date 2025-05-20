@@ -1,11 +1,10 @@
 # Triumph Keeper
 
-Inspired in my CSC 648 project Triumph Keeper is a comprehensive productivity and knowledge management app designed to help users organize their goals, track progress, and maintain a repository of valuable information. It provides a seamless and intuitive experience for managing personal and professional objectives.
+Inspired in my CSC 648 project Triumph Keeper is a comprehensive productivity and knowledge management app designed to help users organize their goals, track progress, and maintain a repository of valuable information. It provides a seamless and intuitive experience for managing personal and professional objectives. Specially I have an issue remembering terminal commands so one widget is dedicated to code snippet for those computer scientist with a bad memory like mine.
 
 ## Project Overview
-Triumph Keeper is a personal productivity app that combines goal tracking, knowledge management, and quick access to important resources. It helps users maintain focus on their objectives while providing easy access to frequently used information and resources.
+Triumph Keeper is a personal productivity app that combines goal tracking, knowledge management, and quick access to important resources. It helps users maintain focus on their objectives while providing easy access to frequently used information and resources. 
 
-## Core Features
 
 
 # Must-Have Features
@@ -37,7 +36,7 @@ Triumph Keeper is a personal productivity app that combines goal tracking, knowl
    - Knowledge base growth
    - Usage patterns
 
-3. **Widgets and Notifications** ✓
+3. **Widgets and Notifications**✓ 
    - Home screen widgets ✓
    - Progress reminders
    - Due date notifications
