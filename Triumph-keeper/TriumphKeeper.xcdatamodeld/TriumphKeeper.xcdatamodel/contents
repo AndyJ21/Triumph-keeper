@@ -13,11 +13,13 @@
         <attribute name="dueDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="isCompleted" optional="NO" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="priority" optional="YES" attributeType="String" defaultValueString="Medium"/>
         <attribute name="text" optional="NO" attributeType="String"/>
         <relationship name="belongsToProjectList" optional="NO" maxCount="1" deletionRule="Nullify" destinationEntity="TriumphGoal" inverseName="tasks" inverseEntity="TriumphGoal"/>
     </entity>
     <entity name="TriumphGoal" representedClassName=".TriumphGoal" syncable="YES">
         <attribute name="dateCreated" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="goalDescription" optional="YES" attributeType="String"/>
         <attribute name="displayOrder" optional="NO" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="name" optional="NO" attributeType="String"/>

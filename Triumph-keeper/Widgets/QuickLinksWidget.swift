@@ -1,5 +1,18 @@
 import SwiftUI
 import CoreData
+import WebKit
+
+struct WebPreview: UIViewRepresentable {
+    let url: URL
+    
+    func makeUIView(context: Context) -> WKWebView {
+        let webView = WKWebView()
+        webView.load(URLRequest(url: url))
+        return webView
+    }
+    
+    func updateUIView(_ uiView: WKWebView, context: Context) {}
+}
 
 struct QuickLinksWidget: View {
     @Environment(\.managedObjectContext) private var viewContext
@@ -10,8 +23,6 @@ struct QuickLinksWidget: View {
     private var links: FetchedResults<QuickLinkItem>
     
     @State private var isAddingLink = false
-    @State private var showDeleteConfirmation = false
-    @State private var linkToDelete: QuickLinkItem?
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -49,18 +60,16 @@ struct QuickLinksWidget: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 8) {
+                    LazyVGrid(columns: [GridItem(.flexible())], spacing: 8) {
                         ForEach(links) { link in
-                            LinkRow(link: link) {
-                                linkToDelete = link
-                                showDeleteConfirmation = true
-                            }
+                            LinkRow(link: link)
                         }
                     }
                 }
             }
         }
         .padding()
+        .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color(.systemBackground))
@@ -70,76 +79,101 @@ struct QuickLinksWidget: View {
         .sheet(isPresented: $isAddingLink) {
             AddLinkView(isPresented: $isAddingLink)
         }
-        .alert(isPresented: $showDeleteConfirmation) {
-            Alert(
-                title: Text("Delete Link"),
-                message: Text("Are you sure you want to delete this link?"),
-                primaryButton: .destructive(Text("Delete")) {
-                    if let link = linkToDelete {
-                        deleteLink(link)
-                    }
-                },
-                secondaryButton: .cancel()
-            )
-        }
-    }
-    
-    private func deleteLink(_ link: QuickLinkItem) {
-        withAnimation {
-            viewContext.delete(link)
-            do {
-                try viewContext.save()
-            } catch {
-                print("Error deleting link: \(error)")
-            }
-        }
     }
 }
 
 struct LinkRow: View {
     let link: QuickLinkItem
-    let onDelete: () -> Void
+    @State private var showWebView = false
+    
+    private func getFaviconURL(from urlString: String) -> URL? {
+        guard let url = URL(string: urlString),
+              let host = url.host else { return nil }
+        return URL(string: "https://www.google.com/s2/favicons?domain=\(host)&sz=64")
+    }
     
     var body: some View {
-        HStack {
-            if let url = URL(string: link.urlString ?? "") {
-                Link(destination: url) {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(link.title ?? "")
-                                .font(.system(.subheadline, design: .rounded))
-                                .lineLimit(1)
-                            Text(url.host ?? "")
-                                .font(.system(.caption, design: .rounded))
-                                .foregroundColor(.secondary)
-                                .lineLimit(1)
+        if let url = URL(string: link.urlString ?? "") {
+            Button(action: {
+                showWebView = true
+            }) {
+                HStack(spacing: 12) {
+                    // Website favicon
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color.blue.opacity(0.1))
+                            .frame(width: 40, height: 40)
+                        if let faviconURL = getFaviconURL(from: link.urlString ?? "") {
+                            AsyncImage(url: faviconURL) { image in
+                                image
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: 24, height: 24)
+                            } placeholder: {
+                                Text(String(url.host?.prefix(1) ?? "").uppercased())
+                                    .font(.system(size: 18, weight: .bold))
+                                    .foregroundColor(.blue)
+                            }
+                        } else {
+                            Text(String(url.host?.prefix(1) ?? "").uppercased())
+                                .font(.system(size: 18, weight: .bold))
+                                .foregroundColor(.blue)
                         }
-                        Spacer()
-                        Image(systemName: "arrow.up.right.square")
-                            .font(.system(size: 14))
-                            .foregroundColor(.blue)
                     }
-                    .contentShape(Rectangle())
+                    
+                    // Website info
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(link.title ?? "")
+                            .font(.system(.subheadline, design: .rounded).bold())
+                            .foregroundColor(.primary)
+                            .lineLimit(1)
+                        Text(url.host ?? "")
+                            .font(.system(.caption, design: .rounded))
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                    }
+                    
+                    Spacer()
+                    
+                    Image(systemName: "arrow.up.right.square")
+                        .font(.system(size: 14))
+                        .foregroundColor(.blue)
                 }
-            } else {
-                Text(link.title ?? "")
-                    .lineLimit(1)
+                .padding(12)
+                .background(Color(.systemBackground))
+                .cornerRadius(8)
             }
-            
-            Button(action: onDelete) {
-                Image(systemName: "trash")
-                    .font(.system(size: 14))
-                    .foregroundColor(.red.opacity(0.8))
+            .sheet(isPresented: $showWebView) {
+                NavigationView {
+                    WebView(url: url)
+                        .navigationTitle(link.title ?? "")
+                        .navigationBarTitleDisplayMode(.inline)
+                        .toolbar {
+                            ToolbarItem(placement: .navigationBarLeading) {
+                                Button("Done") {
+                                    showWebView = false
+                                }
+                            }
+                        }
+                }
             }
+        } else {
+            Text(link.title ?? "")
+                .lineLimit(1)
         }
-        .padding(8)
-        .background(Color(.systemBackground))
-        .cornerRadius(8)
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(Color.gray.opacity(0.2), lineWidth: 1)
-        )
     }
+}
+
+struct WebView: UIViewRepresentable {
+    let url: URL
+    
+    func makeUIView(context: Context) -> WKWebView {
+        let webView = WKWebView()
+        webView.load(URLRequest(url: url))
+        return webView
+    }
+    
+    func updateUIView(_ uiView: WKWebView, context: Context) {}
 }
 
 struct AddLinkView: View {
