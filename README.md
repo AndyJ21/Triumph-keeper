@@ -56,6 +56,9 @@ Triumph Keeper is a personal productivity app that combines goal tracking, knowl
 - Modular component design 
 - Clean, maintainable code structure 
 
+## Wireframes
+<img src="Triumph-keeper/Assets.xcassets/Wireframes.imageset/Wireframes.jpg" width="600">
+
 ## Screenshots
 
 ### Main Screen
