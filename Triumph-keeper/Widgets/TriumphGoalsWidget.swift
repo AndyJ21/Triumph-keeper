@@ -54,9 +54,11 @@ struct TriumphGoalsWidget: View {
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(.systemBackground))
+                .cornerRadius(12)
             } else {
                 ScrollView {
-                    LazyVGrid(columns: [GridItem(.flexible())], spacing: 10) {
+                    LazyVGrid(columns: [GridItem(.flexible())], spacing: 16) {
                         ForEach(goals, id: \.objectID) { goal in
                             GoalRow(goal: goal, isSelected: selectedGoal?.objectID == goal.objectID)
                                 .onTapGesture {
@@ -66,17 +68,14 @@ struct TriumphGoalsWidget: View {
                                 }
                         }
                     }
+                    .padding(.horizontal, 4)
                 }
             }
         }
         .padding()
         .frame(maxWidth: .infinity)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.systemBackground))
-                .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.3 : 0.1),
-                       radius: 10, x: 0, y: 4)
-        )
+        .background(Color(.systemGroupedBackground))
+        .cornerRadius(16)
         .sheet(isPresented: $isAddingGoal) {
             AddGoalView(isPresented: $isAddingGoal)
         }

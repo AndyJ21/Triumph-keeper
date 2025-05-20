@@ -17,13 +17,13 @@ struct WebPreview: UIViewRepresentable {
 
 struct QuickLinksWidget: View {
     @Environment(\.managedObjectContext) private var viewContext
-    @Environment(\.colorScheme) private var colorScheme
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \QuickLinkItem.displayOrder, ascending: true)],
         animation: .default)
     private var links: FetchedResults<QuickLinkItem>
     
     @State private var isAddingLink = false
+    @State private var selectedLink: QuickLinkItem?
     @State private var showDeleteAlert = false
     
     var body: some View {
@@ -67,26 +67,33 @@ struct QuickLinksWidget: View {
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(.systemBackground))
+                .cornerRadius(12)
             } else {
                 ScrollView {
-                    LazyVGrid(columns: [GridItem(.flexible())], spacing: 10) {
+                    LazyVGrid(columns: [GridItem(.flexible())], spacing: 16) {
                         ForEach(links, id: \.objectID) { link in
                             LinkRow(link: link)
+                                .onTapGesture {
+                                    selectedLink = link
+                                }
                         }
                     }
+                    .padding(.horizontal, 4)
                 }
             }
         }
         .padding()
         .frame(maxWidth: .infinity)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.systemBackground))
-                .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.3 : 0.1),
-                       radius: 10, x: 0, y: 4)
-        )
+        .background(Color(.systemGroupedBackground))
+        .cornerRadius(16)
         .sheet(isPresented: $isAddingLink) {
             AddLinkView(isPresented: $isAddingLink)
+        }
+        .sheet(item: $selectedLink) { link in
+            WebView(url: URL(string: link.urlString ?? "")!)
+                .navigationTitle(link.title ?? "")
+                .navigationBarTitleDisplayMode(.inline)
         }
         .alert("Delete All Links", isPresented: $showDeleteAlert) {
             Button("Cancel", role: .cancel) { }
@@ -101,15 +108,10 @@ struct QuickLinksWidget: View {
     private func deleteAllLinks() {
         withAnimation {
             viewContext.performAndWait {
-                // Delete all links
                 for link in links {
                     viewContext.delete(link)
                 }
-                do {
-                    try viewContext.save()
-                } catch {
-                    print("Error deleting all links: \(error)")
-                }
+                try? viewContext.save()
             }
         }
     }
