@@ -11,6 +11,7 @@ struct TriumphGoalsWidget: View {
     
     @State private var isAddingGoal = false
     @State private var selectedGoal: TriumphGoal?
+    @State private var showDeleteAlert = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -19,10 +20,17 @@ struct TriumphGoalsWidget: View {
                 Label("Triumph Goals", systemImage: "flag.fill")
                     .font(.headline)
                 Spacer()
-                Button(action: { isAddingGoal = true }) {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.system(size: 22))
-                        .foregroundColor(.blue)
+                HStack(spacing: 16) {
+                    Button(action: { showDeleteAlert = true }) {
+                        Image(systemName: "trash")
+                            .font(.system(size: 18))
+                            .foregroundColor(.red)
+                    }
+                    Button(action: { isAddingGoal = true }) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 22))
+                            .foregroundColor(.blue)
+                    }
                 }
             }
             .padding(.bottom, 4)
@@ -74,6 +82,33 @@ struct TriumphGoalsWidget: View {
         }
         .sheet(item: $selectedGoal) { goal in
             GoalDetailView(goal: goal)
+        }
+        .alert("Delete All Goals", isPresented: $showDeleteAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete All", role: .destructive) {
+                deleteAllGoals()
+            }
+        } message: {
+            Text("Are you sure you want to delete all goals? This will also delete all associated tasks.")
+        }
+    }
+    
+    private func deleteAllGoals() {
+        withAnimation {
+            viewContext.performAndWait {
+                // Delete all goals and their associated tasks
+                for goal in goals {
+                    // First delete all associated tasks
+                    if let tasks = goal.tasks?.allObjects as? [TaskItem] {
+                        for task in tasks {
+                            viewContext.delete(task)
+                        }
+                    }
+                    // Then delete the goal
+                    viewContext.delete(goal)
+                }
+                try? viewContext.save()
+            }
         }
     }
 }

@@ -1,6 +1,7 @@
 import SwiftUI
 import CoreData
 import WebKit
+import WidgetKit
 
 struct WebPreview: UIViewRepresentable {
     let url: URL
@@ -23,6 +24,7 @@ struct QuickLinksWidget: View {
     private var links: FetchedResults<QuickLinkItem>
     
     @State private var isAddingLink = false
+    @State private var showDeleteAlert = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -31,10 +33,17 @@ struct QuickLinksWidget: View {
                 Label("Quick Links", systemImage: "link")
                     .font(.headline)
                 Spacer()
-                Button(action: { isAddingLink = true }) {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.system(size: 22))
-                        .foregroundColor(.blue)
+                HStack(spacing: 16) {
+                    Button(action: { showDeleteAlert = true }) {
+                        Image(systemName: "trash")
+                            .font(.system(size: 18))
+                            .foregroundColor(.red)
+                    }
+                    Button(action: { isAddingLink = true }) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 22))
+                            .foregroundColor(.blue)
+                    }
                 }
             }
             .padding(.bottom, 4)
@@ -60,17 +69,9 @@ struct QuickLinksWidget: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 ScrollView {
-                    LazyVGrid(columns: [GridItem(.flexible())], spacing: 8) {
-                        ForEach(links) { link in
-                            LinkRow(link: link, onDelete: { linkToDelete in
-                                withAnimation {
-                                    viewContext.performAndWait {
-                                        viewContext.delete(linkToDelete)
-                                        try? viewContext.save()
-                                    }
-                                }
-                            })
-                            .id(link.identifier)
+                    LazyVGrid(columns: [GridItem(.flexible())], spacing: 10) {
+                        ForEach(links, id: \.objectID) { link in
+                            LinkRow(link: link)
                         }
                     }
                 }
@@ -87,12 +88,36 @@ struct QuickLinksWidget: View {
         .sheet(isPresented: $isAddingLink) {
             AddLinkView(isPresented: $isAddingLink)
         }
+        .alert("Delete All Links", isPresented: $showDeleteAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete All", role: .destructive) {
+                deleteAllLinks()
+            }
+        } message: {
+            Text("Are you sure you want to delete all quick links?")
+        }
+    }
+    
+    private func deleteAllLinks() {
+        withAnimation {
+            viewContext.performAndWait {
+                // Delete all links
+                for link in links {
+                    viewContext.delete(link)
+                }
+                do {
+                    try viewContext.save()
+                } catch {
+                    print("Error deleting all links: \(error)")
+                }
+            }
+        }
     }
 }
 
 struct LinkRow: View {
     let link: QuickLinkItem
-    let onDelete: (QuickLinkItem) -> Void
+    @Environment(\.managedObjectContext) private var viewContext
     @State private var showWebView = false
     @State private var showEditSheet = false
     @State private var showDeleteAlert = false
@@ -187,7 +212,7 @@ struct LinkRow: View {
             .alert("Delete Link", isPresented: $showDeleteAlert) {
                 Button("Cancel", role: .cancel) { }
                 Button("Delete", role: .destructive) {
-                    onDelete(link)
+                    deleteLink()
                 }
             } message: {
                 Text("Are you sure you want to delete this link?")
@@ -195,6 +220,19 @@ struct LinkRow: View {
         } else {
             Text(link.title ?? "")
                 .lineLimit(1)
+        }
+    }
+    
+    private func deleteLink() {
+        withAnimation {
+            viewContext.performAndWait {
+                viewContext.delete(link)
+                do {
+                    try viewContext.save()
+                } catch {
+                    print("Error deleting link: \(error)")
+                }
+            }
         }
     }
 }
