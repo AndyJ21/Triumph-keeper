@@ -62,7 +62,15 @@ struct QuickLinksWidget: View {
                 ScrollView {
                     LazyVGrid(columns: [GridItem(.flexible())], spacing: 8) {
                         ForEach(links) { link in
-                            LinkRow(link: link)
+                            LinkRow(link: link, onDelete: { linkToDelete in
+                                withAnimation {
+                                    viewContext.performAndWait {
+                                        viewContext.delete(linkToDelete)
+                                        try? viewContext.save()
+                                    }
+                                }
+                            })
+                            .id(link.identifier)
                         }
                     }
                 }
@@ -84,7 +92,10 @@ struct QuickLinksWidget: View {
 
 struct LinkRow: View {
     let link: QuickLinkItem
+    let onDelete: (QuickLinkItem) -> Void
     @State private var showWebView = false
+    @State private var showEditSheet = false
+    @State private var showDeleteAlert = false
     
     private func getFaviconURL(from urlString: String) -> URL? {
         guard let url = URL(string: urlString),
@@ -143,6 +154,19 @@ struct LinkRow: View {
                 .background(Color(.systemBackground))
                 .cornerRadius(8)
             }
+            .contextMenu {
+                Button(action: {
+                    showEditSheet = true
+                }) {
+                    Label("Edit Link", systemImage: "pencil")
+                }
+                
+                Button(role: .destructive) {
+                    showDeleteAlert = true
+                } label: {
+                    Label("Delete Link", systemImage: "trash")
+                }
+            }
             .sheet(isPresented: $showWebView) {
                 NavigationView {
                     WebView(url: url)
@@ -156,6 +180,17 @@ struct LinkRow: View {
                             }
                         }
                 }
+            }
+            .sheet(isPresented: $showEditSheet) {
+                EditLinkView(link: link, isPresented: $showEditSheet)
+            }
+            .alert("Delete Link", isPresented: $showDeleteAlert) {
+                Button("Cancel", role: .cancel) { }
+                Button("Delete", role: .destructive) {
+                    onDelete(link)
+                }
+            } message: {
+                Text("Are you sure you want to delete this link?")
             }
         } else {
             Text(link.title ?? "")
@@ -230,5 +265,82 @@ struct AddLinkView: View {
         
         PersistenceController.shared.createQuickLink(title: title, urlString: urlString)
         isPresented = false
+    }
+}
+
+struct EditLinkView: View {
+    @Environment(\.managedObjectContext) private var viewContext
+    let link: QuickLinkItem
+    @Binding var isPresented: Bool
+    
+    @State private var title: String
+    @State private var urlString: String
+    @State private var showError = false
+    @State private var errorMessage = ""
+    
+    init(link: QuickLinkItem, isPresented: Binding<Bool>) {
+        self.link = link
+        self._isPresented = isPresented
+        self._title = State(initialValue: link.title ?? "")
+        self._urlString = State(initialValue: link.urlString ?? "")
+    }
+    
+    var body: some View {
+        NavigationView {
+            Form {
+                Section {
+                    TextField("Title", text: $title)
+                        .textContentType(.name)
+                    TextField("URL", text: $urlString)
+                        .keyboardType(.URL)
+                        .textContentType(.URL)
+                        .autocapitalization(.none)
+                } footer: {
+                    if showError {
+                        Text(errorMessage)
+                            .foregroundColor(.red)
+                            .font(.caption)
+                    }
+                }
+            }
+            .navigationTitle("Edit Link")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        isPresented = false
+                    }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Save") {
+                        updateLink()
+                    }
+                    .disabled(title.isEmpty || urlString.isEmpty)
+                    .font(.headline)
+                }
+            }
+        }
+    }
+    
+    private func updateLink() {
+        guard let url = URL(string: urlString), UIApplication.shared.canOpenURL(url) else {
+            showError = true
+            errorMessage = "Please enter a valid URL"
+            return
+        }
+        
+        // Delete the old link
+        viewContext.delete(link)
+        
+        // Create a new link with the updated values
+        PersistenceController.shared.createQuickLink(title: title, urlString: urlString)
+        
+        // Save the context
+        do {
+            try viewContext.save()
+            isPresented = false
+        } catch {
+            showError = true
+            errorMessage = "Failed to save changes: \(error.localizedDescription)"
+        }
     }
 } 

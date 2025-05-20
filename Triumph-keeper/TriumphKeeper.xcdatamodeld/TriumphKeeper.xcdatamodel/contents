@@ -3,7 +3,7 @@
     <entity name="QuickLinkItem" representedClassName=".QuickLinkItem" syncable="YES">
         <attribute name="dateAdded" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="displayOrder" optional="NO" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
-        <attribute name="id" optional="NO" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="title" optional="NO" attributeType="String"/>
         <attribute name="urlString" optional="NO" attributeType="String"/>
     </entity>

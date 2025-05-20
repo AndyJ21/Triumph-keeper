@@ -41,6 +41,12 @@ struct PersistenceController {
         saveContext()
     }
     
+    func deleteQuickLink(_ link: QuickLinkItem) {
+        let context = container.viewContext
+        context.delete(link)
+        saveContext()
+    }
+    
     // MARK: - Triumph Goals
     func createTriumphGoal(name: String) -> TriumphGoal {
         let context = container.viewContext

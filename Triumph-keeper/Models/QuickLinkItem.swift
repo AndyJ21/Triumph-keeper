@@ -12,6 +12,10 @@ public class QuickLinkItem: NSManagedObject, Identifiable {
         self.dateAdded = Date()
         self.displayOrder = 0
     }
+    
+    public var identifier: UUID {
+        id ?? UUID()
+    }
 }
 
 extension QuickLinkItem {
@@ -21,7 +25,7 @@ extension QuickLinkItem {
 
     @NSManaged public var dateAdded: Date
     @NSManaged public var displayOrder: Int32
-    @NSManaged public var id: UUID
+    @NSManaged public var id: UUID?
     @NSManaged public var title: String?
     @NSManaged public var urlString: String?
 } 
