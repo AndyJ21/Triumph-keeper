@@ -45,30 +45,30 @@ Triumph Keeper is a personal productivity app that combines goal tracking, knowl
 ## Technical Implementation
 
 ### Core Technologies
-- SwiftUI for modern, responsive UI ✓
-- CoreData for persistent storage ✓
-- WidgetKit for home screen widgets ✓
-- WebKit for web content preview ✓
+- SwiftUI for modern, responsive UI 
+- CoreData for persistent storage 
+- WidgetKit for home screen widgets 
+- WebKit for web content preview 
 
 ### Architecture
-- MVVM architecture pattern ✓
-- Persistent storage using CoreData ✓
-- Modular component design ✓
-- Clean, maintainable code structure ✓
+- MVVM architecture pattern 
+- Persistent storage using CoreData 
+- Modular component design 
+- Clean, maintainable code structure 
 
 ## Screenshots
 
 ### Main Screen
-<img src="Triumph-keeper/Assets.xcassets/main-screen-screenshot.imageset/main-screen-screenshot.png" width="300">
+<img src="Triumph-keeper/Assets.xcassets/main-screen-screenshot.imageset/Simulator Screenshot - iPhone 16 Pro - 2025-05-20 at 10.27.50.png" width="300">
 
 ### Goal Detail Screen
-<img src="Triumph-keeper/Assets.xcassets/goal-detail-screenshot.imageset/goal-detail-screenshot.png" width="300">
+<img src="Triumph-keeper/Assets.xcassets/goal-detail-screenshot.imageset/Simulator Screenshot - iPhone 16 Pro - 2025-05-20 at 10.32.29.png" width="300">
 
 ### Quick Links Screen
-<img src="Triumph-keeper/Assets.xcassets/quick-links-screenshot.imageset/quick-links-screenshot.png" width="300">
+<img src="Triumph-keeper/Assets.xcassets/quick-links-screenshot.imageset/Simulator Screenshot - iPhone 16 Pro - 2025-05-20 at 10.44.26.png" width="300">
 
 ### Knowledge Bytes Screen
-<img src="Triumph-keeper/Assets.xcassets/knowledge-bytes-screenshot.imageset/knowledge-bytes-screenshot.png" width="300">
+<img src="Triumph-keeper/Assets.xcassets/knowledge-bytes-screenshot.imageset/Simulator Screenshot - iPhone 16 Pro - 2025-05-20 at 10.44.56.png" width="300">
 
 
 
